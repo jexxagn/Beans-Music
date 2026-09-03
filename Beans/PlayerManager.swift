@@ -464,16 +464,8 @@ final class PlayerManager: NSObject, ObservableObject {
                     guard generation == self.loadGeneration else { return }
                     self.isBuffering = false
                     self.loadFailed = true
-                    let hasUserSourceKey = (UserDefaults.standard
-                        .string(forKey: UnblockSourceStore.userAPIKeysKey)?
-                        .split(whereSeparator: { $0 == "\n" || $0 == "," || $0 == ";" })
-                        .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-                        .filter { !$0.isEmpty }
-                        .isEmpty ?? true) == false
                     let failureMessage = enableUnblock
-                        ? (hasUserSourceKey
-                           ? "播放失败，可能是音源调用上限或地址失效，请稍后重试"
-                           : "播放失败，您已开启第三方音源功能，请填写密钥后播放")
+                        ? "播放失败，可能是音源调用上限或地址失效，请稍后重试"
                         : "播放失败，未获取到可用音源"
                     BeansLogger.shared.log("播放失败：\(song.name) - \(failureMessage)｜音质=\(quality.level)", level: .error)
                     ToastCenter.shared.show(failureMessage, duration: 3)
