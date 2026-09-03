@@ -61,50 +61,10 @@ struct ThirdPartySource: Identifiable, Codable, Hashable, Sendable {
     }
 }
 
-/// 第三方音源管理：保留内置预设接口，密钥只使用用户自己填写或导入的内容。
+/// 第三方音源管理：管理用户导入/创建的自定义音源。
 final class UnblockSourceStore: ObservableObject {
     static let shared = UnblockSourceStore()
     static let userAPIKeysKey = "beans.thirdPartyAPIKeys"
-
-    private static let paidAPIURL = "https://source.shiqianjiang.cn/api/music"
-    private static let paidURLTemplate = "\(paidAPIURL)/url?source={source}&songId={id}&quality={quality}"
-    private static var paidHeaders: [String: String] {
-        [
-            "quality": "320k",
-        ]
-    }
-
-    static let paidPresetSources: [ThirdPartySource] = [
-        ThirdPartySource(
-            id: "beans.preset.shiqianjiang.lx.v7",
-            name: "聆澜音源 · LX",
-            kind: "paid-lx",
-            template: paidURLTemplate,
-            headers: paidHeaders,
-            quality: "320k",
-            isPreset: true
-        ),
-        ThirdPartySource(
-            id: "beans.preset.shiqianjiang.cr.v7",
-            name: "聆澜音源 · CR",
-            kind: "paid-cr",
-            template: paidURLTemplate,
-            headers: paidHeaders,
-            quality: "320k",
-            isPreset: true
-        ),
-        ThirdPartySource(
-            id: "beans.preset.shiqianjiang.qt.v7",
-            name: "聆澜音源 · QT",
-            kind: "paid-qt",
-            template: paidURLTemplate,
-            headers: paidHeaders,
-            quality: "320k",
-            isPreset: true
-        ),
-    ]
-
-    static let protectedPresetSourceIDs = Set(paidPresetSources.map(\.id))
 
     @Published var sources: [ThirdPartySource] {
         didSet { save() }
@@ -127,33 +87,11 @@ final class UnblockSourceStore: ObservableObject {
             savedSources = []
         }
 
-        // 既保留当前支持的预设，也保留用户导入/创建的自定义音源。
-        // 预设项按内置模板更新字段，自定义项保持原样。
-        let supportedPresetIDs = Set(Self.paidPresetSources.map(\.id))
-        var normalized: [ThirdPartySource] = []
+        // 只保留用户导入/创建的自定义音源，移除所有旧预设标记的音源。
+        var normalized = savedSources.filter { !$0.isPreset }
+        // 去重
         var seen = Set<String>()
-        for source in savedSources {
-            if source.isPreset {
-                guard supportedPresetIDs.contains(source.id) else { continue }
-                guard let preset = Self.paidPresetSources.first(where: { $0.id == source.id }) else { continue }
-                var updated = preset
-                updated.name = source.name.isEmpty ? preset.name : source.name
-                updated.kind = source.kind.isEmpty ? preset.kind : source.kind
-                updated.template = source.template.isEmpty ? preset.template : source.template
-                updated.urlPath = source.urlPath.isEmpty ? preset.urlPath : source.urlPath
-                updated.headers = source.headers.isEmpty ? preset.headers : source.headers
-                updated.enabled = source.enabled
-                updated.isPreset = true
-                if seen.insert(updated.id).inserted {
-                    normalized.append(updated)
-                }
-            } else if seen.insert(source.id).inserted {
-                normalized.append(source)
-            }
-        }
-        for preset in Self.paidPresetSources where !seen.contains(preset.id) {
-            normalized.append(preset)
-        }
+        normalized = normalized.filter { seen.insert($0.id).inserted }
         sources = normalized
         defaults.removeObject(forKey: legacyCustomKey)
         defaults.removeObject(forKey: legacyLXKey)
@@ -167,7 +105,7 @@ final class UnblockSourceStore: ObservableObject {
     }
 
     func isProtectedPreset(_ source: ThirdPartySource) -> Bool {
-        source.isPreset || Self.protectedPresetSourceIDs.contains(source.id)
+        false
     }
 
     func addSource(_ source: ThirdPartySource) {
@@ -220,7 +158,6 @@ final class UnblockSourceStore: ObservableObject {
 
     @discardableResult
     func removeSource(id: String) -> Bool {
-        guard !Self.protectedPresetSourceIDs.contains(id) else { return false }
         let originalCount = sources.count
         sources.removeAll { $0.id == id }
         save()

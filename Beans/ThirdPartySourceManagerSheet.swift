@@ -431,19 +431,13 @@ private struct SourceRow: View {
 
                 Spacer()
 
-                if source.isPreset {
-                    Image(systemName: "lock.fill")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(Color.beansComment)
-                } else {
-                    Button {
-                        onRemove()
-                    } label: {
-                        Image(systemName: "trash")
-                            .foregroundStyle(Color.red.opacity(0.9))
-                    }
-                    .buttonStyle(.plain)
+                Button {
+                    onRemove()
+                } label: {
+                    Image(systemName: "trash")
+                        .foregroundStyle(Color.red.opacity(0.9))
                 }
+                .buttonStyle(.plain)
             }
         }
         .padding(14)
@@ -711,7 +705,7 @@ private struct SourceEditorSheet: View {
             .tint(Color.beansAmber)
 
             if draft.isPreset {
-                Text(beansLocalized("这是预设音源。你可以编辑它，但不能从管理页直接删除。", "This is a preset source. You can edit it, but it cannot be deleted from the manager."))
+                Text(beansLocalized("这是预设音源。", "This is a preset source."))
                     .font(BeansFont.appFont(11))
                     .foregroundStyle(Color.beansComment)
             }
