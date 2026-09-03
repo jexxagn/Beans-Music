@@ -1229,7 +1229,6 @@ struct SettingsView: View {
     @AppStorage(PlatformPreferenceStore.hidePickerKey) private var hidePlatformPicker = false
     @ObservedObject private var sourceStore = UnblockSourceStore.shared
     @ObservedObject private var chartCovers = ChartCoverStore.shared
-    @AppStorage("beans.thirdPartyAPIKeys") private var thirdPartyAPIKeys = ""
     @ObservedObject private var platformPrefs = PlatformPreferenceStore.shared
 
     @State private var appearanceExpanded = false
@@ -1246,8 +1245,6 @@ struct SettingsView: View {
     @State private var showRestorePicker = false
     @State private var pendingRestore: [String: Any]?
     @State private var showRestoreConfirm = false
-    @State private var showSourceHelp = false
-    @State private var showThirdPartyKeys = true
     @State private var showSourceManager = false
     @State private var backupExpanded = false
     @State private var backupIncludeAccounts = false
@@ -1485,16 +1482,6 @@ struct SettingsView: View {
                 handleBackupImport(url)
             }
             .ignoresSafeArea()
-        }
-        .alert("密钥说明", isPresented: $showSourceHelp) {
-            Button("前往购买") {
-                if let url = URL(string: "https://xxd.shop.shiqianjiang.cn/products/4") {
-                    UIApplication.shared.open(url)
-                }
-            }
-            Button("知道了", role: .cancel) {}
-        } message: {
-            Text("音源购买渠道非 Beans Music 本人，价格便宜，可以自行前往支持。购买后获得的密钥仅属于你自己，请填写到上方输入框中使用。")
         }
         .confirmationDialog("导入备份将覆盖当前部分设置，是否继续？", isPresented: $showRestoreConfirm, titleVisibility: .visible) {
             Button("恢复", role: .destructive) {
@@ -2337,49 +2324,6 @@ struct SettingsView: View {
                     .background(Color.black, in: Capsule())
                 }
                 .buttonStyle(GlassPressButtonStyle(scale: 0.97))
-
-                HStack {
-                    Text(beansLocalized("第三方音源密钥", "Third-party source key"))
-                        .font(BeansFont.appFont(13, .semibold))
-                        .foregroundStyle(Color.beansLabel)
-                    Spacer()
-                    Button { showSourceHelp = true } label: {
-                        Image(systemName: "questionmark.circle")
-                            .font(.system(size: 18))
-                            .foregroundStyle(Color.beansAmber)
-                    }
-                    .buttonStyle(.plain)
-                }
-                HStack(spacing: 8) {
-                    Group {
-                        if showThirdPartyKeys {
-                            TextField(beansLocalized("填写你购买的专属密钥", "Enter your purchased private key"), text: $thirdPartyAPIKeys)
-                        } else {
-                            SecureField(beansLocalized("填写你购买的专属密钥", "Enter your purchased private key"), text: $thirdPartyAPIKeys)
-                        }
-                    }
-                    .font(BeansFont.appFont(13))
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-
-                    Button {
-                        showThirdPartyKeys.toggle()
-                        BeansHaptics.tap()
-                    } label: {
-                        Image(systemName: showThirdPartyKeys ? "eye" : "eye.slash")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(Color.beansAmber)
-                            .frame(width: 30, height: 30)
-                    }
-                    .buttonStyle(.plain)
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background { BeansSurface(shape: RoundedRectangle(cornerRadius: 12, style: .continuous)) }
-                Text(beansLocalized("输入后才会启用第三方音源。密钥只保存在本机，不会上传到 Beans 服务器。", "Third-party sources are only enabled after you enter a key. The key is stored locally and never uploaded to Beans servers."))
-                    .font(BeansFont.appFont(11))
-                    .foregroundStyle(Color.beansComment)
-                    .frame(maxWidth: .infinity, alignment: .leading)
             }
             .padding(16)
             .background {
